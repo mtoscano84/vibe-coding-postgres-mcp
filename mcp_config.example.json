@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "toolbox-alloydb": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@toolbox-sdk/server",
+        "--prebuilt=alloydb-omni",
+        "--stdio"
+      ],
+      "env": {
+        "ALLOYDB_OMNI_PASSWORD": "pgpwd",
+        "ALLOYDB_OMNI_USER": "postgres",
+        "ALLOYDB_OMNI_HOST": "localhost",
+        "ALLOYDB_OMNI_PORT": "5432",
+        "ALLOYDB_OMNI_DATABASE": "restguidedb"
+      }
+    }
+  }
+}
