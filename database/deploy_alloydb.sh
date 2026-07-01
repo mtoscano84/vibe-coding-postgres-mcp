@@ -36,6 +36,15 @@ while [[ "$#" -gt 0 ]]; do
                 exit 1
             fi
             ;;
+        --network) 
+            if [[ -n "$2" && "$2" != --* ]]; then
+                NETWORK="$2"
+                shift
+            else
+                echo "Error: --network requires a value."
+                exit 1
+            fi
+            ;;
         --vm) CREATE_VM=true ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
@@ -60,6 +69,14 @@ gcloud services enable alloydb.googleapis.com \
                        compute.googleapis.com \
                        servicenetworking.googleapis.com \
                        --quiet
+
+# 0.5. Ensure the VPC Network exists
+echo "Checking network: $NETWORK..."
+NETWORK_EXISTS=$(gcloud compute networks list --filter="name=$NETWORK" --format="value(name)")
+if [[ -z "$NETWORK_EXISTS" ]]; then
+    echo "Network $NETWORK not found. Creating VPC network (auto subnet mode)..."
+    gcloud compute networks create $NETWORK --subnet-mode=auto --quiet
+fi
 
 # 1. Evaluate and prepare network for Private Service Access (PSA)
 echo "Checking network for PSA..."

@@ -83,8 +83,8 @@ We will deploy the initial static version of the frontend to Cloud Run. It will 
    ```bash
    gcloud run deploy berlin-gastronomy-guide \
      --source . \
-     --network=default \
-     --subnet=default \
+     --network=[YOUR_VPC_NETWORK] \
+     --subnet=[YOUR_VPC_NETWORK] \
      --allow-unauthenticated \
      --region=us-central1 \
      --quiet
@@ -157,8 +157,8 @@ Now we will wire the Next.js frontend to the live database.
     ```bash
     gcloud run deploy berlin-gastronomy-guide \
       --source . \
-      --network=default \
-      --subnet=default \
+      --network=[YOUR_VPC_NETWORK] \
+      --subnet=[YOUR_VPC_NETWORK] \
       --set-env-vars="DB_HOST=[YOUR_ALLOYDB_PRIVATE_IP],DB_USER=postgres,DB_PASS=[YOUR_PASSWORD],DB_NAME=restguidedb" \
       --allow-unauthenticated \
       --region=us-central1 \
