@@ -45,6 +45,7 @@ while [[ "$#" -gt 0 ]]; do
                 exit 1
             fi
             ;;
+        --public-ip) CREATE_PUBLIC_IP=true ;;
         --vm) CREATE_VM=true ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
@@ -52,6 +53,10 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 ZONE="${REGION}-a"
+PUBLIC_IP_FLAGS=""
+if [ "$CREATE_PUBLIC_IP" = true ]; then
+    PUBLIC_IP_FLAGS="--assign-inbound-public-ip=ASSIGN_IPV4 --database-flags=password.enforce_complexity=on"
+fi
 
 echo "----------------------------------------"
 echo "Starting AlloyDB Deployment"
@@ -178,6 +183,7 @@ if [[ -z "$EXISTING_INSTANCE" ]]; then
         --region=$REGION \
         --cpu-count=$CPU_COUNT \
         --instance-type=PRIMARY \
+        $PUBLIC_IP_FLAGS \
         --quiet
 else
     echo "Instance $INSTANCE_NAME already exists. Skipping creation."
@@ -201,10 +207,21 @@ if [ "$CREATE_VM" = true ]; then
     fi
 fi
 
+IP_ADDRESS=$(gcloud alloydb instances describe $INSTANCE_NAME \
+    --cluster=$CLUSTER_NAME \
+    --region=$REGION \
+    --format="value(ipAddress)" 2>/dev/null)
+PUBLIC_IP_ADDRESS=$(gcloud alloydb instances describe $INSTANCE_NAME \
+    --cluster=$CLUSTER_NAME \
+    --region=$REGION \
+    --format="value(publicIpAddress)" 2>/dev/null)
+
 echo "----------------------------------------"
 echo "Deployment Process Completed"
 echo "Cluster:  $CLUSTER_NAME ($CLUSTER_TYPE)"
 echo "Instance: $INSTANCE_NAME"
 echo "Region:   $REGION"
+[[ -n "$IP_ADDRESS" ]] && echo "Private IP: $IP_ADDRESS"
+[[ -n "$PUBLIC_IP_ADDRESS" ]] && echo "Public IP:  $PUBLIC_IP_ADDRESS"
 [[ -n "$PASSWORD" ]] && echo "Initial Password: $PASSWORD (if new cluster)"
 echo "----------------------------------------"

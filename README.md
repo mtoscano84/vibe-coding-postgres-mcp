@@ -95,19 +95,15 @@ We will deploy the initial static version of the frontend to Cloud Run. It will 
 
 ## 🔌 Phase 2: Connecting your Agent to Google Cloud
 
-Since AlloyDB is running in a private VPC, your local Agentic IDE (Antigravity) cannot access it directly. We will use the **AlloyDB Auth Proxy** to tunnel traffic securely.
+To allow the AI agent in your IDE (Antigravity) to interact with the database, we will use the official Google Cloud **AlloyDB MCP Server**. 
 
-### 1. Install and Run the AlloyDB Auth Proxy
-1. Download the proxy binary for your operating system (see [AlloyDB Auth Proxy installation guide](https://cloud.google.com/alloydb/docs/auth-proxy#install)).
-2. Authenticate your local environment:
-   ```bash
-   gcloud auth application-default login
-   ```
-3. Start the proxy locally (replace `<PROJECT_ID>`, `<REGION>`, `<CLUSTER_NAME>`, and `<INSTANCE_NAME>` with your AlloyDB details):
-   ```bash
-   ./alloydb-auth-proxy projects/<PROJECT_ID>/locations/<REGION>/clusters/<CLUSTER_NAME>/instances/<INSTANCE_NAME>
-   ```
-   *The proxy will start and listen on `127.0.0.1:5432`.*
+Because the deployment script enabled **Public IP** on the AlloyDB instance, the MCP server can connect directly over the internet. The connection is automatically secured using IAM (leveraging your local `gcloud` credentials), so there is no need to run any local proxies or authorize your local IP address.
+
+### 1. Authenticate your Local Environment
+Before the MCP server can connect, ensure your local terminal is authenticated with Google Cloud Application Default Credentials (ADC):
+```bash
+gcloud auth application-default login
+```
 
 ### 2. Configure the MCP Toolbox in your IDE
 To allow the AI agent to interact with the database, configure the AlloyDB MCP server in your IDE.
@@ -130,7 +126,8 @@ To allow the AI agent to interact with the database, configure the AlloyDB MCP s
        "ALLOYDB_POSTGRES_INSTANCE": "alloydb-aip-01-pr",
        "ALLOYDB_POSTGRES_DATABASE": "postgres",
        "ALLOYDB_POSTGRES_USER": "postgres",
-       "ALLOYDB_POSTGRES_PASSWORD": "[YOUR_ALLOYDB_PASSWORD]"
+       "ALLOYDB_POSTGRES_PASSWORD": "[YOUR_ALLOYDB_PASSWORD]",
+       "ALLOYDB_POSTGRES_IP_TYPE": "public"
      }
    }
    ```
