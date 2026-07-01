@@ -1,213 +1,215 @@
-# Vibe Coding the Backend: AlloyDB Omni & MCP
+# Codelab: Vibe-Coding a Gastronomy Search App on Google Cloud (AlloyDB & Cloud Run)
 
-This repository contains the code and instructions to demonstrate how to use an Agentic IDE (like Antigravity or Cursor) in combination with Model Context Protocol (MCP) to seamlessly integrate a Next.js frontend with a local AlloyDB Omni database using Vibe Coding
+In this codelab, you will learn how to build a modern, AI-powered restaurant search application called **Berlin AI Gastronomy Guide** using **Vibe Coding** (instructing an AI agent using natural language). 
 
-## About the Demo Application
-
-In this demo, we build **Tu guIA Gastronómico**, a modern restaurant search application. We start with a static Next.js frontend displaying hardcoded mock data. Step-by-step, using only natural language prompts ("Vibe Coding"), we instruct our AI agent to:
-1. Ingest a raw CSV dataset of restaurants.
-2. Build a relational database schema in AlloyDB Omni and import the data.
-3. Wire the React frontend to the live database.
-4. Upgrade the search functionality to use **Semantic Vector Search**, allowing users to find restaurants by describing the "vibe" (e.g., "cozy place for a date") rather than matching exact keywords.
-5. Apply production-grade database optimizations (Vector Index and Partitioning).
-
-## Prerequisites
-
-To run this demo locally, you will need:
-*   An Agentic IDE (e.g., Antigravity, Cursor).
-*   [Podman Desktop](https://podman-desktop.io/).
-*   `git` and `npm` installed.
-*   Google Cloud SDK (`gcloud`) installed and authenticated.
-*   A Nano Banana API Key (for generating mock images).
+You will start with a static Next.js frontend running on Google Cloud Run. Using an Agentic IDE (like Antigravity) connected to a live, private Google Cloud **AlloyDB** instance via the **AlloyDB Auth Proxy**, you will instruct the AI agent to:
+1. Ingest a raw CSV dataset of Berlin restaurants.
+2. Wire the Next.js frontend to the live database (Keyword Search).
+3. Upgrade the search to use **Semantic Vector Search** (using Vertex AI embeddings in AlloyDB).
+4. Apply production-grade database optimizations (HNSW Vector Index and Partitioning).
 
 ---
 
-## 1. Getting Started: Clone & Install
+## 🏗️ Architecture
 
-First, clone this repository to your local machine and install the necessary dependencies for the Next.js application.
-
-```bash
-# Clone the repository
-git clone https://github.com/mtoscano84/vibe-e2e-postgres-mcp.git
-
-# Navigate into the project directory
-cd vibe-e2e-postgres-mcp
-
-# Install frontend dependencies
-cd frontend
-npm install
-cd ..
+```
+                                  +---------------------------------------+
+                                  |         Google Cloud Project          |
+                                  |                                       |
+                                  |   +-------------------------------+   |
+                                  |   |          VPC Network          |   |
++--------------------------+      |   |                               |   |
+|   Local Machine (User)   |      |   |   +-----------------------+   |   |
+|                          |      |   |   |    Cloud Run App      |   |   |
+|  +--------------------+  |      |   |   | (berlin-gastronomy)   |   |   |
+|  |   Agentic IDE      |  |      |   |   +-----------+-----------+   |   |
+|  |  (Antigravity)     |  |      |   |               | (VPC Egress)  |   |
+|  +---------+----------+  |      |   |               v               |   |
+|            |             |      |   |   +-----------------------+   |   |
+|            v             |      |   |   |    AlloyDB Instance   |   |   |
+|  +---------+----------+  |      |   |   |     (Private IP)      |   |   |
+|  |   Postgres MCP     |  |      |   |   +-----------^-----------+   |   |
+|  +---------+----------+  |      |   +---------------|---------------+   |
+|            |             |      |                   |                   |
+|            v             |      |                   |                   |
+|  +---------+----------+  |      |                   | (Secure Tunnel)   |
+|  | AlloyDB Auth Proxy |==|======|===================+                   |
+|  +--------------------+  |      |                                       |
++--------------------------+      |   +-------------------------------+   |
+                                  |   |       Public GCS Bucket       |   |
+                                  |   |  (vibe-coding-berlin-images)  |   |
+                                  |   +-------------------------------+   |
+                                  +---------------------------------------+
 ```
 
-### Environment Configuration
-
-The repository contains a `.env.example` file. You need to create a `.env` file for local configuration:
-
-```bash
-# Copy the example env file
-cp .env.example .env
-```
-
-Open the `.env` file and fill in the required values:
-*   `POSTGRES_PASSWORD`: The password for the database (default is `pgpwd`).
-*   `GCP_SA_KEY_PATH`: The absolute path to your Google Cloud Service Account JSON key (required for vector search). See **Section 5. Enabling AI Features** below for instructions on how to obtain this key.
-*   `GOOGLE_CLOUD_PROJECT_ID`: Your Google Cloud Project ID.
+- **Frontend**: Next.js deployed on **Google Cloud Run** with Direct VPC Egress enabled.
+- **Database**: **AlloyDB** (private IP only) running in your Google Cloud VPC.
+- **Assets**: Restaurant images hosted in a public Google Cloud Storage (GCS) bucket.
+- **AI Agent Connection**: Local IDE (Antigravity) connected to the private AlloyDB instance via the **AlloyDB Auth Proxy**.
 
 ---
 
-## 2. Generate Local Assets (Images)
+## 📋 Phase 1: Pre-requisites & Infrastructure Setup
 
-To keep this repository lightweight, the high-resolution restaurant images are not included in the source code. Instead, we use a Python script that reads the restaurant data from our CSV files and generates the images locally using the Google GenAI SDK and the `imagen-4.0-generate-001` model.
+Before starting the vibe-coding cycle, you need to deploy the baseline cloud infrastructure.
 
-### Prerequisites
-Ensure you have the Google GenAI SDK installed in your Python environment:
-```bash
-pip install google-genai
-```
+### 1. Set Up your Google Cloud Project
+1. Open Google Cloud Shell or your local terminal.
+2. Ensure you are authenticated and have set your active project:
+   ```bash
+   gcloud auth login
+   gcloud config set project [YOUR_PROJECT_ID]
+   ```
 
-### Execution
-1.  Ensure you are authenticated with Google Cloud (e.g., via `gcloud auth application-default login`).
-2.  Run the image generation script. This script will read the CSV files in `database/` and populate the `frontend/public/images/` folder:
+### 2. Deploy the AlloyDB Cluster
+We have provided an automated script to provision a private AlloyDB cluster and instance.
+1. Run the deployment script:
+   ```bash
+   bash database/deploy_alloydb.sh --region us-central1
+   ```
+2. **Important**: Note the **Instance IP** and the **Initial Password** printed at the end of the script execution. You will need these to connect.
+
+### 3. Deploy the Next.js Frontend to Cloud Run (State 0)
+We will deploy the initial static version of the frontend to Cloud Run. It will run in the same VPC network as AlloyDB using **Direct VPC Egress**.
+1. Navigate to the `frontend/` directory.
+2. Build and deploy the application:
+   ```bash
+   gcloud run deploy berlin-gastronomy-guide \
+     --source . \
+     --network=default \
+     --subnet=default \
+     --allow-unauthenticated \
+     --region=us-central1 \
+     --quiet
+   ```
+3. Once deployed, note the **Service URL** of your Cloud Run application.
+
+---
+
+## 🔌 Phase 2: Connecting your Agent to Google Cloud
+
+Since AlloyDB is running in a private VPC, your local Agentic IDE (Antigravity) cannot access it directly. We will use the **AlloyDB Auth Proxy** to tunnel traffic securely.
+
+### 1. Install and Run the AlloyDB Auth Proxy
+1. Download the proxy binary for your operating system (see [AlloyDB Auth Proxy installation guide](https://cloud.google.com/alloydb/docs/auth-proxy#install)).
+2. Authenticate your local environment:
+   ```bash
+   gcloud auth application-default login
+   ```
+3. Start the proxy locally (replace `<PROJECT_ID>`, `<REGION>`, `<CLUSTER_NAME>`, and `<INSTANCE_NAME>` with your AlloyDB details):
+   ```bash
+   ./alloydb-auth-proxy projects/<PROJECT_ID>/locations/<REGION>/clusters/<CLUSTER_NAME>/instances/<INSTANCE_NAME>
+   ```
+   *The proxy will start and listen on `127.0.0.1:5432`.*
+
+### 2. Configure the MCP Toolbox in your IDE
+To allow the AI agent to interact with the database, configure the AlloyDB MCP server in your IDE.
+1. In Antigravity, open **Settings > MCP Servers > View raw config**.
+2. Add the following configuration to the `mcpServers` block:
+   ```json
+   "alloydb-postgres": {
+     "command": "npx",
+     "args": [
+       "-y",
+       "@toolbox-sdk/server",
+       "--prebuilt",
+       "alloydb-postgres",
+       "--stdio"
+     ],
+     "env": {
+       "ALLOYDB_POSTGRES_PROJECT": "[YOUR_PROJECT_ID]",
+       "ALLOYDB_POSTGRES_REGION": "us-central1",
+       "ALLOYDB_POSTGRES_CLUSTER": "alloydb-aip-01",
+       "ALLOYDB_POSTGRES_INSTANCE": "alloydb-aip-01-pr",
+       "ALLOYDB_POSTGRES_DATABASE": "postgres",
+       "ALLOYDB_POSTGRES_USER": "postgres",
+       "ALLOYDB_POSTGRES_PASSWORD": "[YOUR_ALLOYDB_PASSWORD]"
+     }
+   }
+   ```
+3. Save the config. Your agent now has direct, secure access to your cloud database!
+
+---
+
+## 🌊 Phase 3: The Vibe Coding Codelab
+
+Open the repository in your Agentic IDE. Open the Agent Chat and execute the following steps by prompting the agent.
+
+### Step 1: Database Ingestion
+We need to load the restaurant catalog into our database.
+* **Prompt**:
+  > Read the headers of `database/seed_data_berlin.csv`. Connect via the MCP tool to the database, create a database named `restguidedb` if it doesn't exist, and create a table named `restaurants` in it with the correct data types. Then, load all the records from the CSV file into the table.
+
+### Step 2: Connect Frontend to Database (Keyword Search)
+Now we will wire the Next.js frontend to the live database.
+* **Prompt**:
+  > Connect our Next.js frontend to our new `restaurants` table in the `restguidedb` database using a connection pool (use the `pg` library, password is '[YOUR_PASSWORD]' at host '127.0.0.1' and port 5432). Replace the hardcoded mock data in `page.tsx` with a live query to the database, and implement keyword search on the restaurant name, category, and description.
+* **Verification**:
+  - The agent will install the `pg` package, configure the pool, and update `page.tsx` to query the database.
+  - Redeploy the application to Cloud Run so it connects to the database:
     ```bash
-    python scripts/generate_images_real.py
+    gcloud run deploy berlin-gastronomy-guide \
+      --source . \
+      --network=default \
+      --subnet=default \
+      --set-env-vars="DB_HOST=[YOUR_ALLOYDB_PRIVATE_IP],DB_USER=postgres,DB_PASS=[YOUR_PASSWORD],DB_NAME=restguidedb" \
+      --allow-unauthenticated \
+      --region=us-central1 \
+      --quiet
     ```
-*Note: The script is configured to process images for both Madrid and Sevilla catalogs.*
+
+### Step 3: Enable Semantic Vector Search
+Now, we want to allow users to search by describing the "vibe" (e.g., *"cozy place for a date"*).
+* **Prompt**:
+  > Upgrade our database to support Semantic Vector Search. Enable the pgvector extension, register the Vertex AI embedding model in AlloyDB using `google_ml_integration`, generate embeddings for the restaurant descriptions, and update our search query to use vector similarity search.
+* **Verification**:
+  - The agent will run SQL commands to enable `vector`, configure the Vertex AI model integration, generate embeddings in a new `embedding` column, and update the search logic in `page.tsx`.
+
+### Step 4: Database Optimization (Virtual DBA)
+Optimize the database to scale to 100K+ rows and handle high concurrent search traffic.
+* **Prompt**:
+  > Act as a Principal Database Architect. Our semantic search is working, but we need to optimize the database for production scale. Analyze our current schema. What are the top 2 database-schema optimizations you recommend we implement right now? Explain them to me and wait for my approval before modifying the database.
+* **Expected Recommendations**:
+  - Create an **HNSW index** on the vector column.
+  - Apply **Declarative Table Partitioning** (e.g., by neighborhood).
+* **Action**: Once the agent explains these, reply with *"Approved, please apply these optimizations"* and let the agent execute them.
 
 ---
 
-## 3. Database Infrastructure Setup
+## 🛠️ Building the Environment (Creator Guide)
 
-We use **AlloyDB Omni** running locally via Podman to provide a production-grade, AI-ready PostgreSQL environment without incurring cloud costs during development.
+If you need to regenerate the assets or redeploy the public GCS bucket in a new environment, follow these steps:
 
-### a. Install and Configure Podman
+### 1. Generate Images Locally
+If you want to regenerate the restaurant images, you can run the image generation script:
+1. Ensure you are authenticated with Google Cloud:
+   ```bash
+   gcloud auth application-default login
+   ```
+2. Run the image generation script to populate `frontend/public/images/berlin/`:
+   ```bash
+   python3 scripts/generate_images_real.py
+   ```
 
-1.  **Install Podman Desktop:** If you haven't already, download and install [Podman Desktop](https://podman-desktop.io/).
-    *   **Mac Users:** If the `podman` command isn't found in your `$PATH`, the most reliable fix is to install it via Homebrew: `brew install podman`.
-
-2.  **Configure the Podman Machine:** Create and initialize your Podman virtual machine with these minimum specifications:
-    *   **vCPUs:** 2
-    *   **Memory:** 4 GB
-    *   **Storage:** 50 GB
-
-### b. Start a Fresh Database Instance
-
-To ensure a clean state for the demo, run the `reset-demo.sh` script from the root of this project. This script will automatically stop and remove any old `alloydb-omni` container before starting a fresh one.
-
-```bash
-bash ./reset-demo.sh
-```
-
-Verify the new container is running:
-```bash
-podman ps
-```
-*You should see `docker.io/google/alloydbomni:latest` running on port `5432`.*
-
-### c. Verify Connection
-
-Test your connection to the database manually:
-```bash
-psql -h localhost -p 5432 -U postgres
-# The password is "pgpwd" as defined in the script.
-```
-
----
-
-## 4. Agent & Tooling Setup (The "Vibe Coding" Stack)
-
-This section configures your Agentic IDE to securely interact with the local database.
-
-### a. Configure the MCP Toolbox
-
-This repository includes a `mcp_config.example.json` at the root, which serves as a template for configuring the AlloyDB Omni toolbox.
-
-**For Antigravity Users:**
-Antigravity requires you to register MCP servers globally via its UI.
-1. Open the Agent panel, click the `...` menu, select **MCP Servers**, then **Manage MCP Servers > View raw config**.
-2. Copy the `"toolbox-alloydb"` object from `mcp_config.example.json` and paste it into the `"mcpServers"` block of your Antigravity raw config file.
-
-### b. Register Custom "Skills"
-
-Skills are version-controlled markdown recipes that teach the agent how to execute complex workflows. You need to symlink the skills from this repository to your IDE's global skill directory.
-
-**Example: Registering the `connect-nextjs-to-db` Skill**
-
-*(Instructions assume Antigravity; adjust paths for your IDE if needed)*
-
-1.  Create the global skills directory:
-    ```bash
-    mkdir -p ~/.gemini/antigravity/skills/connect-nextjs-to-db
-    ```
-2.  Create a symbolic link from this repository to the global directory. Using `$(pwd)` ensures the absolute path is correct.
-    ```bash
-    # IMPORTANT: Replace the path with your actual project path
-    ln -s "$(pwd)/skills/connect-nextjs-to-db" ~/.gemini/antigravity/skills/connect-nextjs-to-db
-    ```
-*(Repeat this process for any other skills in the `/skills` directory).*
-
----
-
-## 5. Enabling AI Features (AlloyDB AI)
-
-To use the native `embedding()` function within AlloyDB Omni, the container needs access to Vertex AI via a Google Cloud Service Account.
-
-1.  **Create a Service Account Key:** Follow the official [AlloyDB Omni AI Setup Documentation](https://docs.cloud.google.com/alloydb/omni/containers/current/docs/install-with-alloydb-ai) to create a Service Account with the `Vertex AI User` role and download the JSON key.
-
-2.  **Mount the Key:** Save your downloaded JSON key to a known location (e.g., `~/.config/gcp-keys/alloydb-omni-sa.json`). The `reset-demo.sh` script is already configured to mount this path; ensure the path in the script matches where you saved your key.
-
----
-
-## 6. Running the Demo (The Vibe Coding Flow)
-
-With the infrastructure and agent configured, you are ready to start Vibe Coding. Open this project (`vibe-e2e-postgres-mcp`) in your Agentic IDE, start the Next.js development server (`npm run dev`), and open the Agent Chat.
-
-Follow this prompt sequence to reproduce the demo:
-
-### Step 1: Database Initialization & Data Ingestion
-Ask the agent to read your local CSV and construct the database schema autonomously.
-
-> **Prompt 1:**  
-> Lee las cabeceras del seed_data_sevilla.csv. Conéctate vía MCP a la base de datos restguidedb, crea la tabla restaurantes en AlloyDB Omni con los tipos de datos correctos, y luego genera y ejecuta el comando de Postgres (\copy o COPY) para importar todo el archivo.
-
-### Step 2: Connect Frontend to the Database
-Ask the agent to replace the hardcoded mock data in the React application with a live connection to AlloyDB.
-
-> **Prompt 2:**  
-> Act as a Senior Full-Stack Engineer. Our Next.js frontend is currently displaying hardcoded mock data. Connect it to our 'restaurantes' catalog in the 'restguidedb' database. Users should be able to search by name, neighborhood, or description. (DB password is 'pgpwd' on port 5432).
-
-### Step 3: Upgrade Database with Semantic Search
-Instruct the agent to add vector search capabilities directly into the database engine.
-
-> **Prompt 3:**  
-> Our users are complaining that searching for 'romantic dinner' returns no results because they are doing exact keyword matches. Please upgrade our AlloyDB database to support Semantic Vector Search for the 'restaurantes' catalog based on their descriptions.
-
-### Step 4: Implement Semantic Search in the UI
-Now tell the agent to update the frontend logic to consume the new vector search feature.
-
-> **Prompt 4:**  
-> Now make the frontend use this new semantic superpower. When a user searches, the app should find restaurants based on the meaning of their query, not the exact words. Replace the old search logic with vector similarity.
-
-### Step 5: Production Optimization (The Virtual DBA)
-Finally, ask the agent to act as an architect and optimize the table for production scale.
-
-> **Prompt 5:**  
-> Act as a Principal Database Architect for Google Cloud. Our semantic search on the `restaurantes` table is working perfectly for a small dataset. However, we are preparing for a launch that will scale the table to 100K+ rows and handle massive concurrent user searches. Analyze our current setup. What are the top 2 database-schema optimizations you recommend we implement right now and explain me why. (Keep your answer brief, focusing on the database layer. Wait for my approval before modifying the database).
-
-*(Note: Once the agent replies with its recommendations—likely ScaNN indexing and Partitioning—you can approve it to let the MCP execute the DDL).*
-
----
-
-## 7. Resetting the Demo
-
-If you want to run the demo again from scratch, you need to reset the environment and the agent's context.
-
-### a. Reset the Database and Codebase
-Run the reset script. This script automatically stops and removes the modified AlloyDB Omni container, spins up a fresh, empty instance, and restores your local codebase (reverting any changes the agent made to your Next.js files).
-```bash
-bash ./reset-demo.sh
-```
-
-### b. Clear Antigravity Context
-To ensure the agent doesn't use information, memory, or cached schemas from the previous run:
-1. Close your current chat session in Antigravity.
-2. Open a **New Chat** (or use the "Reload Window" / "Clear Context" command if available). This guarantees the agent starts with a completely fresh context window for your next demo run.
+### 2. Upload to GCS and Make Public
+To upload the generated images to a new GCS bucket and make them public:
+1. Define your bucket name:
+   ```bash
+   export BUCKET_NAME="vibe-coding-berlin-images"
+   ```
+2. Create the bucket with Uniform Bucket-Level Access:
+   ```bash
+   gcloud storage buckets create gs://$BUCKET_NAME --location=us-central1 --uniform-bucket-level-access
+   ```
+3. Upload the images:
+   ```bash
+   gcloud storage cp -r frontend/public/images/berlin gs://$BUCKET_NAME/images/
+   ```
+4. Grant public read access to the bucket (bypassing Domain Restricted Sharing if needed by configuring this at the project/org level first):
+   ```bash
+   gcloud storage buckets add-iam-policy-binding gs://$BUCKET_NAME --member=allUsers --role=roles/storage.objectViewer
+   ```
+5. Update `GCS_BUCKET_NAME` in `scripts/generate_catalog.py` and run it to regenerate the CSV with the new GCS URLs:
+   ```bash
+   python3 scripts/generate_catalog.py
+   ```

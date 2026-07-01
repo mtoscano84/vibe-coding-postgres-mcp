@@ -27,8 +27,8 @@ You are a Principal Database Administrator specializing in PostgreSQL. Your task
     - Since PostgreSQL cannot directly convert a standard table to a partitioned one, you must follow the standard migration pattern:
       a) Rename the existing table: `ALTER TABLE {table_name} RENAME TO {table_name}_old;`
       b) Create the new partitioned table with the exact same schema as the old one, but add `PARTITION BY LIST ({partition_column})`. Include the `vector(768)` column.
-      c) Create at least 3 partition tables for the most common values in the `{partition_column}` (e.g., 'Triana', 'Santa Cruz', 'Macarena') and one default partition:
-         `CREATE TABLE {table_name}_triana PARTITION OF {table_name} FOR VALUES IN ('Triana');`
+      c) Create at least 3 partition tables for the most common values in the `{partition_column}` (e.g., 'Kreuzberg', 'Mitte', 'Neukölln') and one default partition:
+         `CREATE TABLE {table_name}_kreuzberg PARTITION OF {table_name} FOR VALUES IN ('Kreuzberg');`
          `CREATE TABLE {table_name}_default PARTITION OF {table_name} DEFAULT;`
       d) Copy the data from the old table to the new partitioned table:
          `INSERT INTO {table_name} SELECT * FROM {table_name}_old;`

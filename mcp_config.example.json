@@ -1,19 +1,22 @@
 {
   "mcpServers": {
-    "toolbox-alloydb": {
+    "alloydb-postgres": {
       "command": "npx",
       "args": [
         "-y",
         "@toolbox-sdk/server",
-        "--prebuilt=alloydb-omni",
+        "--prebuilt",
+        "alloydb-postgres",
         "--stdio"
       ],
       "env": {
-        "ALLOYDB_OMNI_PASSWORD": "pgpwd",
-        "ALLOYDB_OMNI_USER": "postgres",
-        "ALLOYDB_OMNI_HOST": "localhost",
-        "ALLOYDB_OMNI_PORT": "5432",
-        "ALLOYDB_OMNI_DATABASE": "restguidedb"
+        "ALLOYDB_POSTGRES_PROJECT": "[YOUR_PROJECT_ID]",
+        "ALLOYDB_POSTGRES_REGION": "us-central1",
+        "ALLOYDB_POSTGRES_CLUSTER": "alloydb-aip-01",
+        "ALLOYDB_POSTGRES_INSTANCE": "alloydb-aip-01-pr",
+        "ALLOYDB_POSTGRES_DATABASE": "postgres",
+        "ALLOYDB_POSTGRES_USER": "postgres",
+        "ALLOYDB_POSTGRES_PASSWORD": "[YOUR_ALLOYDB_PASSWORD]"
       }
     }
   }
