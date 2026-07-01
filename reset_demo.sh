@@ -1,28 +1,31 @@
 #!/bin/bash
 
-echo "--- Resetting Database ---"
-podman rm -f alloydb-omni 2>/dev/null
-podman volume rm alloydb_omni_data_v1 2>/dev/null
+# Load environment variables from .env file if it exists
+if [ -f .env ]; then
+  export $(grep -v '^#' .env | xargs)
+fi
 
-./database/start-alloydb-omni.sh
+DB_PASS=${POSTGRES_PASSWORD:-"pgpwd"}
 
-echo "Waiting 5 seconds for DB to start..."
-sleep 5
+echo "--- Resetting Database on GCP (via Local Proxy) ---"
+echo "Attempting to drop 'restguidedb' database..."
 
-# Create the database only if it doesn't exist (start script might already do this, but safe to keep)
-podman exec -i alloydb-omni psql -U postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'restguidedb'" | grep -q 1 || podman exec -i alloydb-omni psql -U postgres -c "CREATE DATABASE restguidedb;"
+# Run psql command against localhost (AlloyDB Auth Proxy)
+PGPASSWORD=$DB_PASS psql -h 127.0.0.1 -p 5432 -U postgres -c "DROP DATABASE IF EXISTS restguidedb;" 2>/dev/null
 
-echo "Database reset complete."
+if [ $? -eq 0 ]; then
+  echo "Database 'restguidedb' dropped successfully."
+else
+  echo "⚠️ Warning: Could not connect to AlloyDB via 127.0.0.1:5432."
+  echo "Make sure the AlloyDB Auth Proxy is running locally before running this script if you want to reset the database."
+fi
 
 echo "--- Resetting Codebase ---"
 git reset --hard HEAD
 
-# THE FIX: Added -e .env to protect your local credentials
-git clean -fdx -e frontend/public/images/ -e .env
+# Clean up untracked files but preserve .env and node_modules
+git clean -fdx -e .env -e frontend/node_modules/
 
-cd frontend && npm install
-
-# Free up port 3000 if busy
 echo "Freeing up port 3000..."
 lsof -ti :3000 | xargs kill -9 2>/dev/null || true
 
