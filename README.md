@@ -49,64 +49,83 @@ You will start with a static Next.js frontend running on Google Cloud Run. Using
 
 ---
 
-## 📋 Phase 1: Pre-requisites & Infrastructure Setup
+## 📋 Phase 1: Prerequisites & Infrastructure Setup
 
-Before starting the vibe-coding cycle, you need to deploy the baseline cloud infrastructure.
+Before starting the vibe-coding cycle, you must set up your local environment and deploy the baseline cloud infrastructure.
 
-### 1. Set Up your Google Cloud Project
-1. Open Google Cloud Shell or your local terminal.
-2. Ensure you are authenticated and have set your active project:
+### 1. Set Up your Local Environment & Authenticate
+1. **Verify Google Cloud SDK (gcloud)**:
+   Ensure you have the Google Cloud CLI installed. Run:
+   ```bash
+   gcloud --version
+   ```
+   *If it is not installed, download and install it from the [Google Cloud CLI Installation Guide](https://cloud.google.com/sdk/docs/install).*
+
+2. **Verify Git**:
+   Ensure you have Git installed. Run:
+   ```bash
+   git --version
+   ```
+
+3. **Clone the Repository**:
+   Clone this repository to your local machine and navigate into the project directory:
+   ```bash
+   git clone https://github.com/mtoscano84/vibe-coding-postgres-mcp.git
+   cd vibe-coding-postgres-mcp
+   ```
+
+4. **Authenticate with Google Cloud**:
+   Log in to the gcloud CLI and set your active project:
    ```bash
    gcloud auth login
    gcloud config set project [YOUR_PROJECT_ID]
    ```
 
-### 2. Clone the Repository
-Clone this repository to your local machine (or Cloud Shell) and navigate into the project directory:
-```bash
-git clone https://github.com/mtoscano84/vibe-coding-postgres-mcp.git
-cd vibe-coding-postgres-mcp
-```
-
-### 3. Deploy the AlloyDB Cluster
-We have provided an automated script to provision a private AlloyDB cluster and instance.
-1. Run the deployment script:
+5. **Configure Cloud Build Permissions**:
+   Grant the Compute Engine default service account the necessary roles for Cloud Build to compile and package the application:
    ```bash
-   source database/deploy_alloydb.sh --region us-central1 --public-ip
-   ```
-2. **Important**: Note the **Instance IP** and the **Initial Password** printed at the end of the script execution. You will need these to connect.
-
-### 4. Deploy the Next.js Frontend to Cloud Run (State 0)
-We will deploy the initial static version of the frontend to Cloud Run. It will run in the same VPC network as AlloyDB using **Direct VPC Egress**.
-1. Navigate to the `frontend/` directory.
-2. Enable the required APIs and grant the necessary IAM permissions to the Compute Engine default service account for Cloud Build:
-   ```bash
-   # Enable APIs
-   gcloud services enable run.googleapis.com \
-                          artifactregistry.googleapis.com \
-                          cloudbuild.googleapis.com \
-                          --quiet
-
-   # Get project number and grant roles
    PROJECT_NUMBER=$(gcloud projects describe $(gcloud config get-value project) --format="value(projectNumber)")
 
+   # Grant Storage Object Viewer (to read source code)
    gcloud projects add-iam-policy-binding $(gcloud config get-value project) \
        --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
        --role="roles/storage.objectViewer" \
        --quiet
+
+   # Grant Log Writer (to write build logs)
    gcloud projects add-iam-policy-binding $(gcloud config get-value project) \
        --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
        --role="roles/logging.logWriter" \
        --quiet
+
+   # Grant Artifact Registry Writer (to push container images)
    gcloud projects add-iam-policy-binding $(gcloud config get-value project) \
        --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
        --role="roles/artifactregistry.writer" \
        --quiet
    ```
-3. Build and deploy the application:
+
+### 2. Deploy the AlloyDB Cluster
+We have provided an automated script to provision a private AlloyDB cluster and instance.
+1. Run the deployment script from the root directory:
+   ```bash
+   bash database/deploy_alloydb.sh --region us-central1 --public-ip
+   ```
+2. **Important**: Note the **Instance IP** and the **Initial Password** printed at the end of the script execution. You will need these to connect.
+
+### 3. Deploy the Next.js Frontend to Cloud Run (State 0)
+We will deploy the initial static version of the frontend to Cloud Run. It will run in the same VPC network as AlloyDB using **Direct VPC Egress**.
+1. Enable the required APIs for Cloud Run and Cloud Build:
+   ```bash
+   gcloud services enable run.googleapis.com \
+                          artifactregistry.googleapis.com \
+                          cloudbuild.googleapis.com \
+                          --quiet
+   ```
+2. Build and deploy the application (run this from the root directory):
    ```bash
    gcloud run deploy berlin-gastronomy-guide \
-     --source . \
+     --source frontend/ \
      --network=[YOUR_VPC_NETWORK] \
      --subnet=[YOUR_VPC_NETWORK] \
      --allow-unauthenticated \
@@ -178,7 +197,7 @@ Now we will wire the Next.js frontend to the live database.
   - Redeploy the application to Cloud Run so it connects to the database:
     ```bash
     gcloud run deploy berlin-gastronomy-guide \
-      --source . \
+      --source frontend/ \
       --network=[YOUR_VPC_NETWORK] \
       --subnet=[YOUR_VPC_NETWORK] \
       --set-env-vars="DB_HOST=[YOUR_ALLOYDB_PRIVATE_IP],DB_USER=postgres,DB_PASS=[YOUR_PASSWORD],DB_NAME=postgres" \
@@ -197,7 +216,7 @@ Now, we want to allow users to search by describing the "vibe" (e.g., *"cozy pla
   - Redeploy the application to Cloud Run to apply the semantic search changes:
     ```bash
     gcloud run deploy berlin-gastronomy-guide \
-      --source . \
+      --source frontend/ \
       --network=[YOUR_VPC_NETWORK] \
       --subnet=[YOUR_VPC_NETWORK] \
       --set-env-vars="DB_HOST=[YOUR_ALLOYDB_PRIVATE_IP],DB_USER=postgres,DB_PASS=[YOUR_PASSWORD],DB_NAME=postgres" \
