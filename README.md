@@ -18,34 +18,42 @@ You will start with a static Next.js frontend running on Google Cloud Run. Using
                                   |                                       |
                                   |   +-------------------------------+   |
                                   |   |          VPC Network          |   |
-+--------------------------+      |   |                               |   |
-|   Local Machine (User)   |      |   |   +-----------------------+   |   |
-|                          |      |   |   |    Cloud Run App      |   |   |
-|  +--------------------+  |      |   |   | (berlin-gastronomy)   |   |   |
-|  |   Agentic IDE      |  |      |   |   +-----------+-----------+   |   |
-|  |  (Antigravity)     |  |      |   |               | (VPC Egress)  |   |
-|  +---------+----------+  |      |   |               v               |   |
-|            |             |      |   |   +-----------------------+   |   |
-|            v             |      |   |   |    AlloyDB Instance   |   |   |
-|  +---------+----------+  |      |   |   |     (Private IP)      |   |   |
-|  |   Postgres MCP     |  |      |   |   +-----------^-----------+   |   |
+                                  |   |                               |   |
+                                  |   |   +-----------------------+   |   |
+                                  |   |   |    Cloud Run App      |   |   |
+                                  |   |   | (berlin-gastronomy)   |   |   |
+                                  |   |   +-----------+-----------+   |   |
+                                  |   |               | (Private IP)  |   |
+                                  |   |               v (VPC Egress)  |   |
++--------------------------+      |   |   +-----------------------+   |   |
+|   Local Machine (User)   |      |   |   |    AlloyDB Instance   |   |   |
+|                          |      |   |   |                       |   |   |
+|  +--------------------+  |      |   |   |   - Private IP        |   |   |
+|  |   Agentic IDE      |  |      |   |   |   - Public IP (SSL)   |   |   |
+|  |  (Antigravity)     |  |      |   |   +-----------^-----------+   |   |
 |  +---------+----------+  |      |   +---------------|---------------+   |
 |            |             |      |                   |                   |
 |            v             |      |                   |                   |
-|  +---------+----------+  |      |                   | (Secure Tunnel)   |
-|  | AlloyDB Auth Proxy |==|======|===================+                   |
+|  +---------+----------+  |      |                   |                   |
+|  |   Postgres MCP     |==|======|===================+ (Direct SSL)      |
 |  +--------------------+  |      |                                       |
 +--------------------------+      |   +-------------------------------+   |
                                   |   |       Public GCS Bucket       |   |
                                   |   |  (vibe-coding-berlin-images)  |   |
                                   |   +-------------------------------+   |
+                                  |                                       |
+                                  |   +-------------------------------+   |
+                                  |   |          Vertex AI            |   |
+                                  |   |   (In-Database Embeddings)    |   |
+                                  |   +-------------------------------+   |
                                   +---------------------------------------+
 ```
 
-- **Frontend**: Next.js deployed on **Google Cloud Run** with Direct VPC Egress enabled.
-- **Database**: **AlloyDB** (private IP only) running in your Google Cloud VPC.
+- **Frontend**: Next.js deployed on **Google Cloud Run** with Direct VPC Egress enabled (connecting to AlloyDB's Private IP).
+- **Database**: **AlloyDB** running in your VPC, configured with **both Private IP** (for Cloud Run) and **Public IP** with SSL (for local IDE access).
 - **Assets**: Restaurant images hosted in a public Google Cloud Storage (GCS) bucket.
-- **AI Agent Connection**: Local IDE (Antigravity) connected to the private AlloyDB instance via the **AlloyDB Auth Proxy**.
+- **AI Agent Connection**: Local IDE (Antigravity) connected directly to the AlloyDB Public IP via the **Postgres MCP** server (secured with SSL).
+- **AI Integrations**: AlloyDB integrated with **Vertex AI** for in-database vector embedding generation.
 
 ---
 
