@@ -72,7 +72,7 @@ cd vibe-coding-postgres-mcp
 We have provided an automated script to provision a private AlloyDB cluster and instance.
 1. Run the deployment script:
    ```bash
-   bash database/deploy_alloydb.sh --region us-central1
+   source database/deploy_alloydb.sh --region us-central1 --public-ip
    ```
 2. **Important**: Note the **Instance IP** and the **Initial Password** printed at the end of the script execution. You will need these to connect.
 
@@ -126,8 +126,7 @@ To allow the AI agent to interact with the database, configure the AlloyDB MCP s
        "ALLOYDB_POSTGRES_INSTANCE": "alloydb-aip-01-pr",
        "ALLOYDB_POSTGRES_DATABASE": "postgres",
        "ALLOYDB_POSTGRES_USER": "postgres",
-       "ALLOYDB_POSTGRES_PASSWORD": "[YOUR_ALLOYDB_PASSWORD]",
-       "ALLOYDB_POSTGRES_IP_TYPE": "public"
+       "ALLOYDB_POSTGRES_PASSWORD": "[YOUR_ALLOYDB_PASSWORD]"
      }
    }
    ```
