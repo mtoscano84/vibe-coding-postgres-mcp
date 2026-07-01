@@ -160,46 +160,61 @@ To allow the AI agent to interact with the database, configure the AlloyDB MCP s
 
 ## 🌊 Phase 3: The Vibe Coding Codelab
 
-Open the repository in your Agentic IDE. Open the Agent Chat and execute the following steps by prompting the agent.
+Open the repository in your Agentic IDE (Antigravity). Open the Agent Chat and execute the following steps by prompting the agent.
 
 ### Step 1: Database Ingestion
 We need to load the restaurant catalog into our database.
 * **Prompt**:
-  > Read the headers of `database/seed_data_berlin.csv`. Connect via the MCP tool to the database, create a database named `restguidedb` if it doesn't exist, and create a table named `restaurants` in it with the correct data types. Then, load all the records from the CSV file into the table.
+  > Read the headers of `database/seed_data_berlin.csv`. Connect to the database via the MCP tool, create a table named `restaurants` with the correct data types, and load all the records from the CSV file into it.
+* **Verification**:
+  - The agent will read the CSV, analyze the schema, connect to AlloyDB, create the table, and insert the 100 restaurant records.
 
 ### Step 2: Connect Frontend to Database (Keyword Search)
 Now we will wire the Next.js frontend to the live database.
 * **Prompt**:
-  > Connect our Next.js frontend to our new `restaurants` table in the `restguidedb` database using a connection pool (use the `pg` library, password is '[YOUR_PASSWORD]' at host '127.0.0.1' and port 5432). Replace the hardcoded mock data in `page.tsx` with a live query to the database, and implement keyword search on the restaurant name, category, and description.
+  > Connect our Next.js frontend to the `restaurants` table in the database using the `pg` library. Use a connection pool configured with environment variables: `DB_HOST`, `DB_USER` (postgres), `DB_PASS` (password is '[YOUR_PASSWORD]'), and `DB_NAME` (postgres). Replace the mock data in `page.tsx` with a live query, and implement keyword search on the name, category, and description.
 * **Verification**:
-  - The agent will install the `pg` package, configure the pool, and update `page.tsx` to query the database.
+  - The agent will install the `pg` package, configure the connection pool, and update `page.tsx` to query the database dynamically.
   - Redeploy the application to Cloud Run so it connects to the database:
     ```bash
     gcloud run deploy berlin-gastronomy-guide \
       --source . \
       --network=[YOUR_VPC_NETWORK] \
       --subnet=[YOUR_VPC_NETWORK] \
-      --set-env-vars="DB_HOST=[YOUR_ALLOYDB_PRIVATE_IP],DB_USER=postgres,DB_PASS=[YOUR_PASSWORD],DB_NAME=restguidedb" \
+      --set-env-vars="DB_HOST=[YOUR_ALLOYDB_PRIVATE_IP],DB_USER=postgres,DB_PASS=[YOUR_PASSWORD],DB_NAME=postgres" \
       --allow-unauthenticated \
       --region=us-central1 \
       --quiet
     ```
+  - Open the Cloud Run Service URL. Try searching for "Burgermeister" or "Kebab" to verify that the keyword search works.
 
 ### Step 3: Enable Semantic Vector Search
 Now, we want to allow users to search by describing the "vibe" (e.g., *"cozy place for a date"*).
 * **Prompt**:
-  > Upgrade our database to support Semantic Vector Search. Enable the pgvector extension, register the Vertex AI embedding model in AlloyDB using `google_ml_integration`, generate embeddings for the restaurant descriptions, and update our search query to use vector similarity search.
+  > Upgrade our database to support Semantic Vector Search on the `restaurants` table based on the `description` column. Then, update our frontend search query to use vector similarity search.
 * **Verification**:
-  - The agent will run SQL commands to enable `vector`, configure the Vertex AI model integration, generate embeddings in a new `embedding` column, and update the search logic in `page.tsx`.
+  - The agent will use its custom skill to enable `vector` and `google_ml_integration`, register the Vertex AI embedding model, create the `embedding` column, generate the embeddings in-database, and update the query in `page.tsx` to use the cosine distance operator (`<=>`).
+  - Redeploy the application to Cloud Run to apply the semantic search changes:
+    ```bash
+    gcloud run deploy berlin-gastronomy-guide \
+      --source . \
+      --network=[YOUR_VPC_NETWORK] \
+      --subnet=[YOUR_VPC_NETWORK] \
+      --set-env-vars="DB_HOST=[YOUR_ALLOYDB_PRIVATE_IP],DB_USER=postgres,DB_PASS=[YOUR_PASSWORD],DB_NAME=postgres" \
+      --allow-unauthenticated \
+      --region=us-central1 \
+      --quiet
+    ```
+  - Open the Cloud Run Service URL. Try searching for *"a romantic dinner spot"* or *"quick bite after clubbing"* and verify that it returns semantically relevant results (even if the exact keywords are not in the text!).
 
 ### Step 4: Database Optimization (Virtual DBA)
 Optimize the database to scale to 100K+ rows and handle high concurrent search traffic.
 * **Prompt**:
   > Act as a Principal Database Architect. Our semantic search is working, but we need to optimize the database for production scale. Analyze our current schema. What are the top 2 database-schema optimizations you recommend we implement right now? Explain them to me and wait for my approval before modifying the database.
-* **Expected Recommendations**:
-  - Create an **HNSW index** on the vector column.
-  - Apply **Declarative Table Partitioning** (e.g., by neighborhood).
-* **Action**: Once the agent explains these, reply with *"Approved, please apply these optimizations"* and let the agent execute them.
+* **Verification**:
+  - The agent will analyze the database and recommend creating an **HNSW index** for the vector column and **List Partitioning** for the neighborhoods.
+  - Reply to the agent: *"Approved, please apply these optimizations."*
+  - The agent will use its custom skill to apply the HNSW index and partition the table.
 
 ---
 

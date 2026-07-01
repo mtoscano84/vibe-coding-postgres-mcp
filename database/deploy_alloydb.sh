@@ -73,7 +73,16 @@ echo "Enabling required APIs..."
 gcloud services enable alloydb.googleapis.com \
                        compute.googleapis.com \
                        servicenetworking.googleapis.com \
+                       aiplatform.googleapis.com \
                        --quiet
+
+# Grant Vertex AI User role to AlloyDB Service Agent
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+echo "Granting Vertex AI User role to AlloyDB Service Agent..."
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-alloydb.iam.gserviceaccount.com" \
+    --role="roles/aiplatform.user" \
+    --quiet
 
 # 0.5. Ensure the VPC Network exists
 echo "Checking network: $NETWORK..."
