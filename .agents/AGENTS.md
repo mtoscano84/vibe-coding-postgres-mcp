@@ -8,3 +8,7 @@
     ? { rejectUnauthorized: false }
     : false
   ```
+
+## TypeScript & Dependencies
+- This is a TypeScript project. Whenever you install the `pg` library, you MUST also install `@types/pg` as a devDependency (`npm install -D @types/pg`) to prevent TypeScript compilation and type-checking errors during the build.
+
