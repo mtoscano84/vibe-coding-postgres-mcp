@@ -9,113 +9,165 @@ const mockRestaurants = [
     name: "Burgermeister Schlesisches Tor (MOCK)",
     neighborhood: "Kreuzberg",
     description: "An authentic spot in the heart of Kreuzberg, ideal to grab a burger or kebab after a night out.",
-    category: "Restaurant"
+    category: "Restaurant",
+    image_url: ""
   },
   {
     id: 2,
     name: "Cafe Zeit für Brot (MOCK)",
     neighborhood: "Mitte",
     description: "Famous for its warm cinnamon buns and its cozy vibe. A must-visit in Mitte.",
-    category: "Cafe"
+    category: "Cafe",
+    image_url: ""
   },
   {
     id: 3,
     name: "Mustafa's Gemüse Kebab (MOCK)",
     neighborhood: "Kreuzberg",
     description: "The best option in Kreuzberg to enjoy döner kebab with garlic sauce with friends.",
-    category: "Bistro"
+    category: "Bistro",
+    image_url: ""
   }
 ];
+
+// Helper to render modern developer-themed category icons
+const getCategoryIcon = (category: string) => {
+  const baseClass = "w-10 h-10 text-indigo-400 group-hover:text-cyan-400 transition-colors duration-300";
+  switch (category?.toLowerCase()) {
+    case 'cafe':
+      // Coffee/Cafe cup icon
+      return (
+        <svg className={baseClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M18.5 12a5.5 5.5 0 11-11 0V9h11v3z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9.5 9V5a2 2 0 114 0v4" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M18.5 9h1a2.5 2.5 0 012.5 2.5v1a2.5 2.5 0 01-2.5 2.5h-1" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5.5 20h13" />
+        </svg>
+      );
+    case 'bistro':
+      // Burger/Bistro icon
+      return (
+        <svg className={baseClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 18h14a1 1 0 001-1v-1a5 5 0 00-10 0H7a5 5 0 00-5 5v1a1 1 0 001 1z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 10h16a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2a1 1 0 011-1z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 2C7.58 2 4 4.69 4 8h16c0-3.31-3.58-6-8-6z" />
+        </svg>
+      );
+    default:
+      // Fork/Knife/Restaurant icon
+      return (
+        <svg className={baseClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+        </svg>
+      );
+  }
+};
 
 export default function Home() {
   const [query, setQuery] = useState('');
 
   return (
-    <div className="min-h-screen bg-[#F9F6F0] text-[#2C2523] flex flex-col items-center p-8 font-sans">
+    <div className="min-h-screen bg-[#0B0F19] text-[#F8FAFC] flex flex-col items-center p-8 font-sans antialiased">
 
-      <header className="w-full max-w-4xl text-center mb-12 mt-8">
-        {/* Logo Castizo traditional de azulejo pintado */}
-        <div className="w-44 h-44 mx-auto mb-6 bg-white rounded-full flex items-center justify-center shadow-lg border-4 border-[#c59b27]/80 p-1">
-          <img
-            src="/logo.png"
-            alt="Berlin AI Gastronomy Guide Logo"
-            className="w-40 h-40 object-contain rounded-full"
-          />
+      <header className="w-full max-w-4xl text-center mb-16 mt-12 flex flex-col items-center">
+        {/* Modern typographic/SVG logo for developers */}
+        <div className="w-24 h-24 mb-6 bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 p-0.5">
+          <div className="w-full h-full bg-[#0B0F19] rounded-[14px] flex items-center justify-center">
+            <svg className="w-12 h-12 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3" />
+            </svg>
+          </div>
         </div>
-        <h1 className="text-5xl font-serif font-extrabold mb-4 text-[#8c1c2b] tracking-tight">
+        
+        <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-100 via-indigo-100 to-cyan-100">
           Berlin AI Gastronomy Guide
         </h1>
-        <p className="text-xl text-[#c59b27] font-serif italic font-bold">
-          Less algorithm, more currywurst
+        <p className="text-lg text-slate-400 font-mono tracking-wide">
+          Less algorithm, more <span className="text-cyan-400 font-bold">currywurst</span>
         </p>
       </header>
 
-      <main className="w-full max-w-4xl flex flex-col gap-10">
+      <main className="w-full max-w-4xl flex flex-col gap-12">
 
-        {/* Search Input con Botón - Estilo Castizo */}
-        <div className="bg-white p-6 rounded-2xl shadow-md border border-[#c59b27]/30 backdrop-blur-sm relative">
-          
+        {/* Sleek Search Input */}
+        <div className="bg-[#111827] p-1.5 rounded-2xl border border-slate-800 shadow-xl focus-within:border-indigo-500/50 transition-colors">
           <form
-            className="flex gap-4 relative z-10"
+            className="flex flex-col sm:flex-row gap-2"
             onSubmit={(e) => {
-              e.preventDefault(); // Evita recargar la página en el mock
+              e.preventDefault();
               console.log("Mock Search Triggered:", query);
             }}
           >
-            <input
-              type="text"
-              placeholder="Search where to eat in Berlin..."
-              className="flex-1 p-4 border border-[#c59b27]/35 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8c1c2b] focus:border-transparent text-[#2C2523] bg-[#FCFBF9] transition-all placeholder-gray-600 font-bold shadow-inner font-sans"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
+            <div className="flex-1 flex items-center px-4 gap-3">
+              <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search where to eat in Berlin (e.g. cozy place in Kreuzberg)..."
+                className="w-full py-3 bg-transparent focus:outline-none text-slate-100 placeholder-slate-500 font-medium text-base font-sans"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
 
-            {/* Botón de Búsqueda tradicional */}
             <button
               type="submit"
-              className="px-8 py-4 bg-[#8c1c2b] hover:bg-[#701622] text-white font-serif font-extrabold rounded-xl transition-colors shadow-md border border-[#c59b27]/50 focus:outline-none focus:ring-2 focus:ring-[#c59b27] focus:ring-offset-2 focus:ring-offset-[#FAF6F0]"
+              className="px-8 py-3.5 bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-white font-semibold rounded-xl transition-all duration-200 shadow-md shadow-indigo-500/10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-[#0B0F19]"
             >
               Search
             </button>
           </form>
         </div>
 
-        {/* Results Grid con MOCK Data - Estilo Castizo */}
+        {/* Results Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {mockRestaurants.map((item) => (
             <div
               key={item.id}
-              className="group bg-white rounded-2xl overflow-hidden border border-[#c59b27]/25 hover:border-[#8c1c2b]/70 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col shadow-sm"
+              className="group bg-[#111827] rounded-2xl overflow-hidden border border-slate-800/85 hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all duration-300 flex flex-col"
             >
-              <div className="h-48 bg-[#FAF6F0] flex items-center justify-center relative border-b border-[#c59b27]/20">
-                {/* Logo en cuadrado blanco (Placeholder de la tarjeta) */}
-                <div className="w-20 h-20 bg-white rounded-xl flex items-center justify-center border border-[#c59b27]/40 shadow-sm p-1">
+              {/* Image / Icon container */}
+              <div className="h-48 bg-[#0B0F19]/60 flex items-center justify-center relative border-b border-slate-800/80 overflow-hidden">
+                {item.image_url ? (
                   <img
-                    src="/logo.png"
-                    alt="Logo"
-                    className="w-16 h-16 object-contain rounded-full"
+                    src={item.image_url}
+                    alt={item.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                </div>
-                {/* Etiqueta Categoría estilo Badge Castizo */}
+                ) : (
+                  <div className="w-16 h-16 bg-[#1f2937]/50 rounded-2xl flex items-center justify-center border border-slate-800 shadow-inner p-1 group-hover:scale-110 transition-transform duration-300">
+                    {getCategoryIcon(item.category)}
+                  </div>
+                )}
+                
+                {/* Category Badge */}
                 <div className="absolute top-3 right-3">
-                  <span className="text-xs bg-[#F9F6F0] text-[#8c1c2b] border-2 border-[#8c1c2b]/60 font-serif font-extrabold px-3 py-1 rounded-full shadow-sm">
+                  <span className="text-[11px] bg-[#0B0F19]/80 text-indigo-300 border border-indigo-500/30 font-mono font-semibold px-2.5 py-0.5 rounded-full shadow-sm backdrop-blur-sm">
                     {item.category}
                   </span>
                 </div>
               </div>
 
-              <div className="p-6 flex-1 flex flex-col justify-between bg-white">
+              {/* Card Body */}
+              <div className="p-6 flex-1 flex flex-col justify-between">
                 <div>
-                  <h2 className="text-2xl font-serif font-extrabold text-[#2C2523] mb-2 group-hover:text-[#8c1c2b] transition-colors">
+                  <h2 className="text-xl font-bold text-slate-100 mb-2 group-hover:text-indigo-400 transition-colors duration-200 line-clamp-1">
                     {item.name}
                   </h2>
-                  <p className="text-[#2C2523] text-sm font-semibold mb-4 leading-relaxed font-sans">
+                  <p className="text-slate-400 text-sm leading-relaxed mb-4 line-clamp-3">
                     {item.description}
                   </p>
                 </div>
-                <div className="text-sm text-[#8c1c2b] flex items-center gap-2 font-extrabold">
-                  <span>📍</span>
-                  <span className="text-[#2C2523] font-bold group-hover:text-[#8c1c2b] transition-colors font-sans">
+                
+                {/* Location Footer */}
+                <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
+                  <svg className="w-4 h-4 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="text-slate-300 font-bold group-hover:text-cyan-400 transition-colors duration-200">
                     {item.neighborhood}
                   </span>
                 </div>
@@ -126,8 +178,8 @@ export default function Home() {
 
       </main>
 
-      <footer className="mt-20 mb-10 text-center text-gray-600 text-sm font-serif font-bold italic">
-        © 2026 Berlin AI Gastronomy Guide. Coded with Vibe.
+      <footer className="mt-24 mb-8 text-center text-slate-600 text-xs font-mono">
+        © 2026 Berlin AI Gastronomy Guide. Coded with <span className="text-red-500/60">♥</span> using Antigravity.
       </footer>
     </div>
   );

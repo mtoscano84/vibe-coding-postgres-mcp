@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Lora } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const playfair = Playfair_Display({
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
-  variable: "--font-playfair",
 });
 
-const lora = Lora({
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
-  variable: "--font-lora",
 });
 
 export const metadata: Metadata = {
@@ -23,11 +23,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${playfair.variable} ${lora.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-[#F9F6F0] text-[#2C2523]">{children}</body>
+    <html lang="en" className="h-full antialiased">
+      <body className={`${geistSans.variable} ${geistMono.variable} min-h-full flex flex-col bg-[#0B0F19] text-[#F8FAFC] font-sans`}>
+        {children}
+      </body>
     </html>
   );
 }
