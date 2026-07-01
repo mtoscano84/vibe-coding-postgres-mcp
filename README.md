@@ -61,7 +61,14 @@ Before starting the vibe-coding cycle, you need to deploy the baseline cloud inf
    gcloud config set project [YOUR_PROJECT_ID]
    ```
 
-### 2. Deploy the AlloyDB Cluster
+### 2. Clone the Repository
+Clone this repository to your local machine (or Cloud Shell) and navigate into the project directory:
+```bash
+git clone https://github.com/mtoscano84/vibe-coding-postgres-mcp.git
+cd vibe-coding-postgres-mcp
+```
+
+### 3. Deploy the AlloyDB Cluster
 We have provided an automated script to provision a private AlloyDB cluster and instance.
 1. Run the deployment script:
    ```bash
@@ -69,7 +76,7 @@ We have provided an automated script to provision a private AlloyDB cluster and 
    ```
 2. **Important**: Note the **Instance IP** and the **Initial Password** printed at the end of the script execution. You will need these to connect.
 
-### 3. Deploy the Next.js Frontend to Cloud Run (State 0)
+### 4. Deploy the Next.js Frontend to Cloud Run (State 0)
 We will deploy the initial static version of the frontend to Cloud Run. It will run in the same VPC network as AlloyDB using **Direct VPC Egress**.
 1. Navigate to the `frontend/` directory.
 2. Build and deploy the application:
