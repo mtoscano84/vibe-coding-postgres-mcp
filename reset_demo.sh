@@ -5,22 +5,31 @@ if [ -f .env ]; then
   export $(grep -v '^#' .env | xargs)
 fi
 
-DB_PASS=${POSTGRES_PASSWORD:-"pgpwd"}
+DB_HOST=${DB_HOST:-"127.0.0.1"}
+DB_PASS=${DB_PASS:-"pgpwd"}
+DB_NAME=${DB_NAME:-"postgres"}
 
-echo "--- Resetting Database on GCP (via Local Proxy) ---"
-echo "Attempting to drop 'restguidedb' database..."
+echo "--- Resetting Database Table ---"
+echo "Attempting to drop 'restaurants' table on $DB_HOST..."
 
-# Run psql command against localhost (AlloyDB Auth Proxy)
-PGPASSWORD=$DB_PASS psql -h 127.0.0.1 -p 5432 -U postgres -c "DROP DATABASE IF EXISTS restguidedb;" 2>/dev/null
-
-if [ $? -eq 0 ]; then
-  echo "Database 'restguidedb' dropped successfully."
+# Try to run psql command to drop the table
+if command -v psql &> /dev/null; then
+  PGPASSWORD=$DB_PASS psql -h $DB_HOST -p 5432 -U postgres -d $DB_NAME -c "DROP TABLE IF EXISTS restaurants CASCADE;" 2>/dev/null
+  if [ $? -eq 0 ]; then
+    echo "Successfully dropped 'restaurants' table."
+  else
+    echo "⚠️ Warning: Could not connect to the database via psql."
+    echo "👉 You can easily reset the database by asking your Antigravity agent:"
+    echo "   \"Reset the database by dropping the restaurants table.\""
+  fi
 else
-  echo "⚠️ Warning: Could not connect to AlloyDB via 127.0.0.1:5432."
-  echo "Make sure the AlloyDB Auth Proxy is running locally before running this script if you want to reset the database."
+  echo "Note: 'psql' CLI is not installed locally."
+  echo "👉 You can easily reset the database by asking your Antigravity agent:"
+  echo "   \"Reset the database by dropping the restaurants table.\""
 fi
 
-echo "--- Resetting Codebase ---"
+echo ""
+echo "--- Resetting Codebase to State 0 ---"
 git reset --hard HEAD
 
 # Clean up untracked files but preserve .env and node_modules
