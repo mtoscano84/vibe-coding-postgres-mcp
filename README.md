@@ -89,20 +89,17 @@ Before starting the vibe-coding cycle, you must set up your local environment an
    # Grant Storage Object Viewer (to read source code)
    gcloud projects add-iam-policy-binding $(gcloud config get-value project) \
        --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-       --role="roles/storage.objectViewer" \
-       --quiet
+       --role="roles/storage.objectViewer"
 
    # Grant Log Writer (to write build logs)
    gcloud projects add-iam-policy-binding $(gcloud config get-value project) \
        --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-       --role="roles/logging.logWriter" \
-       --quiet
+       --role="roles/logging.logWriter"
 
    # Grant Artifact Registry Writer (to push container images)
    gcloud projects add-iam-policy-binding $(gcloud config get-value project) \
        --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-       --role="roles/artifactregistry.writer" \
-       --quiet
+       --role="roles/artifactregistry.writer"
    ```
 
 ### 2. Deploy the AlloyDB Cluster
@@ -119,8 +116,7 @@ We will deploy the initial static version of the frontend to Cloud Run. It will 
    ```bash
    gcloud services enable run.googleapis.com \
                           artifactregistry.googleapis.com \
-                          cloudbuild.googleapis.com \
-                          --quiet
+                          cloudbuild.googleapis.com
    ```
 2. Build and deploy the application (run this from the root directory):
    ```bash
@@ -129,8 +125,7 @@ We will deploy the initial static version of the frontend to Cloud Run. It will 
      --network=[YOUR_VPC_NETWORK] \
      --subnet=[YOUR_VPC_NETWORK] \
      --allow-unauthenticated \
-     --region=us-central1 \
-     --quiet
+     --region=us-central1
    ```
 3. Once deployed, note the **Service URL** of your Cloud Run application.
 
@@ -202,8 +197,7 @@ Now we will wire the Next.js frontend to the live database.
       --subnet=[YOUR_VPC_NETWORK] \
       --set-env-vars="DB_HOST=[YOUR_ALLOYDB_PRIVATE_IP],DB_USER=postgres,DB_PASS=[YOUR_PASSWORD],DB_NAME=postgres" \
       --allow-unauthenticated \
-      --region=us-central1 \
-      --quiet
+      --region=us-central1
     ```
   - Open the Cloud Run Service URL. Try searching for "Burgermeister" or "Kebab" to verify that the keyword search works.
 
@@ -221,8 +215,7 @@ Now, we want to allow users to search by describing the "vibe" (e.g., *"cozy pla
       --subnet=[YOUR_VPC_NETWORK] \
       --set-env-vars="DB_HOST=[YOUR_ALLOYDB_PRIVATE_IP],DB_USER=postgres,DB_PASS=[YOUR_PASSWORD],DB_NAME=postgres" \
       --allow-unauthenticated \
-      --region=us-central1 \
-      --quiet
+      --region=us-central1
     ```
   - Open the Cloud Run Service URL. Try searching for *"a romantic dinner spot"* or *"quick bite after clubbing"* and verify that it returns semantically relevant results (even if the exact keywords are not in the text!).
 
