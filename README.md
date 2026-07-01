@@ -79,7 +79,31 @@ We have provided an automated script to provision a private AlloyDB cluster and 
 ### 4. Deploy the Next.js Frontend to Cloud Run (State 0)
 We will deploy the initial static version of the frontend to Cloud Run. It will run in the same VPC network as AlloyDB using **Direct VPC Egress**.
 1. Navigate to the `frontend/` directory.
-2. Build and deploy the application:
+2. Enable the required APIs and grant the necessary IAM permissions to the Compute Engine default service account for Cloud Build:
+   ```bash
+   # Enable APIs
+   gcloud services enable run.googleapis.com \
+                          artifactregistry.googleapis.com \
+                          cloudbuild.googleapis.com \
+                          --quiet
+
+   # Get project number and grant roles
+   PROJECT_NUMBER=$(gcloud projects describe $(gcloud config get-value project) --format="value(projectNumber)")
+
+   gcloud projects add-iam-policy-binding $(gcloud config get-value project) \
+       --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+       --role="roles/storage.objectViewer" \
+       --quiet
+   gcloud projects add-iam-policy-binding $(gcloud config get-value project) \
+       --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+       --role="roles/logging.logWriter" \
+       --quiet
+   gcloud projects add-iam-policy-binding $(gcloud config get-value project) \
+       --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+       --role="roles/artifactregistry.writer" \
+       --quiet
+   ```
+3. Build and deploy the application:
    ```bash
    gcloud run deploy berlin-gastronomy-guide \
      --source . \
