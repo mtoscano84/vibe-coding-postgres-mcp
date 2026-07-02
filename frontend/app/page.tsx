@@ -11,7 +11,7 @@ export interface Restaurant {
   image_path: string;
 }
 
-// Mock data for State 0
+// Mock data for State 0 (No image_path to keep it looking like a prototype)
 const mockRestaurants: Restaurant[] = [
   {
     id: 1,
@@ -19,7 +19,7 @@ const mockRestaurants: Restaurant[] = [
     neighborhood: "Kreuzberg",
     description: "An authentic burger joint located in a former 19th-century public toilet under the U-Bahn tracks. Famous for its rustic charm and juicy, freshly grilled beef burgers.",
     category: "Bistro",
-    image_path: "https://storage.googleapis.com/vibe-coding-berlin-images/burgermeister.jpg"
+    image_path: ""
   },
   {
     id: 2,
@@ -27,7 +27,7 @@ const mockRestaurants: Restaurant[] = [
     neighborhood: "Mitte",
     description: "A popular organic bakery known for its open kitchen and legendary, warm, gooey cinnamon rolls (Schnecken). A perfect spot for a cozy breakfast in Mitte.",
     category: "Cafe",
-    image_path: "https://storage.googleapis.com/vibe-coding-berlin-images/zeit_fuer_brot.jpg"
+    image_path: ""
   },
   {
     id: 3,
@@ -35,13 +35,13 @@ const mockRestaurants: Restaurant[] = [
     neighborhood: "Kreuzberg",
     description: "World-famous kiosk serving iconic chicken and roasted vegetable döner kebabs topped with crumbled feta cheese and a squeeze of fresh lemon juice.",
     category: "Bistro",
-    image_path: "https://storage.googleapis.com/vibe-coding-berlin-images/mustafas.jpg"
+    image_path: ""
   }
 ];
 
 // Helper to render modern developer-themed category icons
 const getCategoryIcon = (category: string) => {
-  const baseClass = "w-10 h-10 text-indigo-400 group-hover:text-cyan-400 transition-colors duration-300";
+  const baseClass = "w-12 h-12 text-indigo-400 group-hover:text-cyan-400 transition-colors duration-300";
   switch (category?.toLowerCase()) {
     case 'cafe':
       // Coffee/Cafe cup icon
@@ -163,13 +163,20 @@ export default function Home() {
                 key={item.id}
                 className="group bg-[#111827] rounded-2xl overflow-hidden border border-slate-800/85 hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all duration-300 flex flex-col"
               >
-                {/* Image container */}
+                {/* Image container / Placeholder */}
                 <div className="h-48 bg-[#0B0F19]/60 flex items-center justify-center relative border-b border-slate-800/80 overflow-hidden">
-                  <img
-                    src={item.image_path}
-                    alt={item.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
+                  {item.image_path ? (
+                    <img
+                      src={item.image_path}
+                      alt={item.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      {getCategoryIcon(item.category)}
+                      <span className="text-[10px] text-slate-500 font-mono uppercase tracking-wider">Prototype Mode</span>
+                    </div>
+                  )}
                   
                   {/* Category Badge */}
                   <div className="absolute top-3 right-3">
