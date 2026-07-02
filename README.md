@@ -12,42 +12,7 @@ You will start with a static Next.js frontend running on Google Cloud Run. Using
 
 ## 🏗️ Architecture
 
-```
-                                  +---------------------------------------+
-                                  |         Google Cloud Project          |
-                                  |                                       |
-                                  |   +-------------------------------+   |
-                                  |   |          VPC Network          |   |
-                                  |   |                               |   |
-                                  |   |   +-----------------------+   |   |
-                                  |   |   |    Cloud Run App      |   |   |
-                                  |   |   | (berlin-gastronomy)   |   |   |
-                                  |   |   +-----------+-----------+   |   |
-                                  |   |               | (Private IP)  |   |
-                                  |   |               v (VPC Egress)  |   |
-+--------------------------+      |   |   +-----------------------+   |   |
-|   Local Machine (User)   |      |   |   |    AlloyDB Instance   |   |   |
-|                          |      |   |   |                       |   |   |
-|  +--------------------+  |      |   |   |   - Private IP        |   |   |
-|  |   Agentic IDE      |  |      |   |   |   - Public IP (SSL)   |   |   |
-|  |  (Antigravity)     |  |      |   |   +-----------^-----------+   |   |
-|  +---------+----------+  |      |   +---------------|---------------+   |
-|            |             |      |                   |                   |
-|            v             |      |                   |                   |
-|  +---------+----------+  |      |                   |                   |
-|  |   Postgres MCP     |==|======|===================+ (Direct SSL)      |
-|  +--------------------+  |      |                                       |
-+--------------------------+      |   +-------------------------------+   |
-                                  |   |       Public GCS Bucket       |   |
-                                  |   |  (vibe-coding-berlin-images)  |   |
-                                  |   +-------------------------------+   |
-                                  |                                       |
-                                  |   +-------------------------------+   |
-                                  |   |          Vertex AI            |   |
-                                  |   |   (In-Database Embeddings)    |   |
-                                  |   +-------------------------------+   |
-                                  +---------------------------------------+
-```
+![Architecture Diagram](images/architecture.png)
 
 - **Frontend**: Next.js deployed on **Google Cloud Run** with Direct VPC Egress enabled (connecting to AlloyDB's Private IP).
 - **Database**: **AlloyDB** running in your VPC, configured with **both Private IP** (for Cloud Run) and **Public IP** with SSL (for local IDE access).

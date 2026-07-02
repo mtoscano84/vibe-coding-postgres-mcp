@@ -1,7 +1,43 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { fetchRestaurants, Restaurant } from './actions';
+
+export interface Restaurant {
+  id: number;
+  name: string;
+  description: string;
+  category: string;
+  neighborhood: string;
+  image_path: string;
+}
+
+// Mock data for State 0
+const mockRestaurants: Restaurant[] = [
+  {
+    id: 1,
+    name: "Burgermeister Schlesisches Tor",
+    neighborhood: "Kreuzberg",
+    description: "An authentic burger joint located in a former 19th-century public toilet under the U-Bahn tracks. Famous for its rustic charm and juicy, freshly grilled beef burgers.",
+    category: "Bistro",
+    image_path: "https://storage.googleapis.com/vibe-coding-berlin-images/burgermeister.jpg"
+  },
+  {
+    id: 2,
+    name: "Zeit für Brot",
+    neighborhood: "Mitte",
+    description: "A popular organic bakery known for its open kitchen and legendary, warm, gooey cinnamon rolls (Schnecken). A perfect spot for a cozy breakfast in Mitte.",
+    category: "Cafe",
+    image_path: "https://storage.googleapis.com/vibe-coding-berlin-images/zeit_fuer_brot.jpg"
+  },
+  {
+    id: 3,
+    name: "Mustafa's Gemüse Kebab",
+    neighborhood: "Kreuzberg",
+    description: "World-famous kiosk serving iconic chicken and roasted vegetable döner kebabs topped with crumbled feta cheese and a squeeze of fresh lemon juice.",
+    category: "Bistro",
+    image_path: "https://storage.googleapis.com/vibe-coding-berlin-images/mustafas.jpg"
+  }
+];
 
 // Helper to render modern developer-themed category icons
 const getCategoryIcon = (category: string) => {
@@ -38,26 +74,26 @@ const getCategoryIcon = (category: string) => {
 
 export default function Home() {
   const [query, setQuery] = useState('');
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>(mockRestaurants);
+  const [loading, setLoading] = useState(false);
 
-  const handleSearch = async (e?: React.FormEvent) => {
+  const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setLoading(true);
-    try {
-      const data = await fetchRestaurants(query);
-      setRestaurants(data);
-    } catch (err) {
-      console.error('Error fetching restaurants:', err);
-    } finally {
+    
+    // Simple local search for State 0
+    const filtered = mockRestaurants.filter(item => 
+      item.name.toLowerCase().includes(query.toLowerCase()) ||
+      item.description.toLowerCase().includes(query.toLowerCase()) ||
+      item.neighborhood.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    // Simulate a tiny network delay for realism
+    setTimeout(() => {
+      setRestaurants(filtered);
       setLoading(false);
-    }
+    }, 200);
   };
-
-  // Load initial data on mount
-  useEffect(() => {
-    handleSearch();
-  }, []);
 
   return (
     <div className="min-h-screen bg-[#0B0F19] text-[#F8FAFC] flex flex-col items-center p-8 font-sans antialiased">
