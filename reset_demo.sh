@@ -38,4 +38,13 @@ git clean -fdx -e .env -e frontend/node_modules/
 echo "Freeing up port 3000..."
 lsof -ti :3000 | xargs kill -9 2>/dev/null || true
 
-echo "Codebase reset complete."
+echo "--- Redeploying State 0 to Cloud Run ---"
+gcloud run deploy berlin-gastronomy-guide \
+  --source frontend/ \
+  --network=default \
+  --subnet=default \
+  --allow-unauthenticated \
+  --region=us-central1 \
+  --quiet
+
+echo "Codebase, database, and Cloud Run reset complete."
