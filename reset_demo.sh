@@ -32,8 +32,8 @@ echo ""
 echo "--- Resetting Codebase to State 0 ---"
 git reset --hard HEAD
 
-# Clean up untracked files but preserve .env and node_modules
-git clean -fdx -e .env -e frontend/node_modules/
+# Clean up untracked files but preserve .env, node_modules, and the CODELAB guide
+git clean -fdx -e .env -e frontend/node_modules/ -e CODELAB.md
 
 echo "Freeing up port 3000..."
 lsof -ti :3000 | xargs kill -9 2>/dev/null || true
