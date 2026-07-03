@@ -9,23 +9,23 @@ DB_HOST=${DB_HOST:-"127.0.0.1"}
 DB_PASS=${DB_PASS:-"pgpwd"}
 DB_NAME=${DB_NAME:-"postgres"}
 
-echo "--- Resetting Database Table ---"
-echo "Attempting to drop 'restaurants' table on $DB_HOST..."
+echo "--- Resetting Database Tables ---"
+echo "Attempting to drop 'reviews' and 'restaurants' tables on $DB_HOST..."
 
-# Try to run psql command to drop the table
+# Try to run psql command to drop the tables
 if command -v psql &> /dev/null; then
-  PGPASSWORD=$DB_PASS psql -h $DB_HOST -p 5432 -U postgres -d $DB_NAME -c "DROP TABLE IF EXISTS restaurants CASCADE;" 2>/dev/null
+  PGPASSWORD=$DB_PASS psql -h $DB_HOST -p 5432 -U postgres -d $DB_NAME -c "DROP TABLE IF EXISTS reviews, restaurants CASCADE;" 2>/dev/null
   if [ $? -eq 0 ]; then
-    echo "Successfully dropped 'restaurants' table."
+    echo "Successfully dropped database tables."
   else
     echo "⚠️ Warning: Could not connect to the database via psql."
     echo "👉 You can easily reset the database by asking your Antigravity agent:"
-    echo "   \"Reset the database by dropping the restaurants table.\""
+    echo "   \"Reset the database by dropping the reviews and restaurants tables.\""
   fi
 else
   echo "Note: 'psql' CLI is not installed locally."
   echo "👉 You can easily reset the database by asking your Antigravity agent:"
-  echo "   \"Reset the database by dropping the restaurants table.\""
+  echo "   \"Reset the database by dropping the reviews and restaurants tables.\""
 fi
 
 echo ""
