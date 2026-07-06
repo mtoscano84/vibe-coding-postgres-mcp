@@ -76,6 +76,10 @@ gcloud services enable alloydb.googleapis.com \
                        aiplatform.googleapis.com \
                        --quiet
 
+# 0.2. Create AlloyDB Service Identity (Service Agent)
+echo "Creating AlloyDB Service Identity..."
+gcloud beta services identity create --service=alloydb.googleapis.com --project=$PROJECT_ID --quiet || true
+
 # Grant Vertex AI User role to AlloyDB Service Agent
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 echo "Granting Vertex AI User role to AlloyDB Service Agent..."
